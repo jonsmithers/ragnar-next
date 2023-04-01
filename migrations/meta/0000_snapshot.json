@@ -1,0 +1,51 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "id": "766a47c7-11ca-4d1a-abb7-2e909326d74b",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "teams": {
+      "name": "teams",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {}
+    },
+    "users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}
