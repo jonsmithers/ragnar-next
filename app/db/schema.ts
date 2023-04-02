@@ -1,13 +1,10 @@
-import { pgTable, serial, varchar } from "drizzle-orm/pg-core";
+import { mysqlTable, serial, varchar } from 'drizzle-orm/mysql-core';
 
-console.log('hi');
-
-export const users = pgTable('users', {
+export const users = mysqlTable('users', {
   id: serial('id').primaryKey(),
-  name: varchar('name'),
+  name: varchar('name', { length: 256 }),
 });
 
-export const teams = pgTable('teams', {
-  name: varchar('name')
+export const teams = mysqlTable('teams', {
+  name: varchar('name', { length: 256 }),
 });
-

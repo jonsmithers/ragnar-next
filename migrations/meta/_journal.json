@@ -1,13 +1,13 @@
 {
   "version": "5",
-  "dialect": "pg",
+  "dialect": "mysql",
   "entries": [
     {
       "idx": 0,
       "version": "5",
-      "when": 1680374433496,
-      "tag": "0000_kind_lila_cheney",
-      "breakpoints": false
+      "when": 1680458879648,
+      "tag": "0000_exotic_galactus",
+      "breakpoints": true
     }
   ]
 }

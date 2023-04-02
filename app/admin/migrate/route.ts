@@ -1,7 +1,12 @@
-import { getDb } from "@/app/db/connection";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { getDb } from '@/app/db/connection';
+import { migrate } from 'drizzle-orm/mysql2/migrator';
 
 export async function GET(_request: Request) {
-  await migrate(getDb(), { migrationsFolder: './migrations' });
-  return new Response('migrated')
+  try {
+    await migrate(getDb(), { migrationsFolder: './migrations' });
+    return new Response('migrated');
+  } catch (e) {
+    console.error(e);
+    return new Response(String(e));
+  }
 }

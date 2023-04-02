@@ -7,20 +7,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate-migration": "npx drizzle-kit generate:pg --out migrations/ --schema app/schema.ts"
+    "generate-migration": "npx drizzle-kit generate:mysql --out migrations/ --schema app/db/schema.ts --breakpoints"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.13.1",
     "@types/node": "18.15.11",
-    "@types/pg": "^8.6.6",
     "@types/react": "18.0.31",
     "@types/react-dom": "18.0.11",
     "drizzle-kit": "^0.17.1",
     "drizzle-orm": "^0.23.4",
     "eslint": "8.37.0",
     "eslint-config-next": "13.2.4",
+    "mysql2": "^3.2.0",
     "next": "13.2.4",
-    "pg": "^8.10.0",
-    "pg-native": "^3.0.1",
+    "prettier": "^2.8.7",
+    "prettier-plugin-organize-imports": "^3.2.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "5.0.3"

@@ -1,18 +1,18 @@
 {
   "version": "5",
-  "dialect": "pg",
-  "id": "766a47c7-11ca-4d1a-abb7-2e909326d74b",
+  "dialect": "mysql",
+  "id": "01981848-dafe-46e8-8cfb-1908c3181da9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "teams": {
       "name": "teams",
-      "schema": "",
       "columns": {
         "name": {
           "name": "name",
-          "type": "varchar",
+          "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -21,19 +21,20 @@
     },
     "users": {
       "name": "users",
-      "schema": "",
       "columns": {
         "id": {
           "name": "id",
           "type": "serial",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "autoincrement": true
         },
         "name": {
           "name": "name",
-          "type": "varchar",
+          "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -41,7 +42,6 @@
       "compositePrimaryKeys": {}
     }
   },
-  "enums": {},
   "schemas": {},
   "_meta": {
     "schemas": {},
