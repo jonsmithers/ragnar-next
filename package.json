@@ -10,7 +10,14 @@
     "generate-migration": "npx drizzle-kit generate:mysql --out migrations/ --schema app/db/schema.ts --breakpoints"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.6",
+    "@mantine/core": "^6.0.5",
+    "@mantine/hooks": "^6.0.5",
+    "@mantine/next": "^6.0.5",
+    "@mantine/notifications": "^6.0.5",
+    "@mantine/ssr": "^6.0.5",
     "@supabase/supabase-js": "^2.13.1",
+    "@tabler/icons-react": "^2.13.2",
     "@types/node": "18.15.11",
     "@types/react": "18.0.31",
     "@types/react-dom": "18.0.11",
