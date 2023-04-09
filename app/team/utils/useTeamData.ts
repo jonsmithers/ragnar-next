@@ -3,7 +3,9 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import z from 'zod';
 const fetcher = (url: string) =>
-  fetch(url).then((res) => (res.ok ? res.json() : Promise.reject(res)));
+  fetch(url).then((res) =>
+    res.ok ? res.json() : res.text().then((text) => Promise.reject(text))
+  );
 
 export function useTeamData(teamName: string) {
   const { data, ...result } = useSWR<TeamData>(
