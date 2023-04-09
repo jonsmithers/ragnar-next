@@ -1,9 +1,11 @@
 import type { TeamData } from '@/server-utils/TeamDataZod';
 import dayjs, { ConfigTypeMap, Dayjs } from 'dayjs';
+import duration, { Duration } from 'dayjs/plugin/duration';
 import objectSupport from 'dayjs/plugin/objectSupport';
 import { sortBy } from 'lodash';
-import { DateObjectUnits, DateTime, Duration } from 'luxon';
+import { DateObjectUnits, DateTime } from 'luxon';
 dayjs.extend(objectSupport);
+dayjs.extend(duration);
 
 export function defaultTime() {
   return DateTime.fromObject(defaultDateValues);
@@ -50,16 +52,33 @@ export const converters = {
     },
   },
   dayjs: {
-    toTimeInputString(d: Dayjs) {
+    toHhmmString(d: Dayjs) {
       return d.format('HH[:]mm').toString();
     },
   },
-  mantine: {
-    timeInputString: {
-      toDayJS(s: string) {
-        const [hours, minutes] = s.split(':');
-        return dayjs({ ...defaultDayJsValues, hours, minutes });
-      },
+  hhmmString: {
+    toDayJS(s: string) {
+      const [hours, minutes] = s.split(':');
+      return dayjs({ ...defaultDayJsValues, hours, minutes });
+    },
+  },
+  mmssString: {
+    toDayJsDuration(s: string) {
+      const [minutes, seconds] = s.split(':').map(Number);
+      return dayjs.duration({ minutes, seconds });
+    },
+    applyMultiplier(d: string, multiplier: number) {
+      console.log('applyMultiplier()', d, multiplier);
+      const duration = converters.mmssString.toDayJsDuration(d);
+      console.log('duration', duration);
+      console.log('duration ms', duration.asMinutes());
+      console.log(
+        'multipledi mins',
+        dayjs.duration(multiplier * duration.asMilliseconds()).asMinutes()
+      );
+      return converters.dayjsDuration.toMmssString(
+        dayjs.duration(multiplier * duration.asMilliseconds())
+      );
     },
   },
   dateTime: {
@@ -67,23 +86,28 @@ export const converters = {
       return d.toFormat('hh:mm a');
     },
   },
-  duration: {
-    /** for text input */
-    toString(d: Duration) {
-      return d.toISOTime()!.slice(3, 8);
+  dayjsDuration: {
+    toHhmmString(d: Duration) {
+      return d.format('HH[:]mm').toString();
     },
-    applyMultiplier(d: Duration, multiplier: number) {
-      return Duration.fromMillis(d.toMillis() * multiplier);
-    },
-    toHuman(t: Duration) {
-      const hours = t.get('hours');
-      const isPm = hours % 24 > 12;
-      if (isPm) {
-        t = t.set({ hours: hours % 12 });
-      } else {
-        t = t.set({ hours: hours % 24 });
-      }
-      return `${t.toFormat('hh:mm')} ${isPm ? 'PM' : 'AM'}`;
-    },
+    toMmssString(d: Duration) {
+      return d.format('mm[:]ss').toString();
+    }
   },
+  // duration: {
+  //   /** for text input */
+  //   toString(d: Duration) {
+  //     return d.toISOTime()!.slice(3, 8);
+  //   },
+  //   toHuman(t: Duration) {
+  //     const hours = t.get('hours');
+  //     const isPm = hours % 24 > 12;
+  //     if (isPm) {
+  //       t = t.set({ hours: hours % 12 });
+  //     } else {
+  //       t = t.set({ hours: hours % 24 });
+  //     }
+  //     return `${t.toFormat('hh:mm')} ${isPm ? 'PM' : 'AM'}`;
+  //   },
+  // },
 };

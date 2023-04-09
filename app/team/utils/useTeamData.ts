@@ -2,7 +2,8 @@ import type { TeamData } from '@/server-utils/TeamDataZod';
 import { useMemo } from 'react';
 import useSWR from 'swr';
 import z from 'zod';
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) =>
+  fetch(url).then((res) => (res.ok ? res.json() : Promise.reject(res)));
 
 export function useTeamData(teamName: string) {
   const { data, ...result } = useSWR<TeamData>(

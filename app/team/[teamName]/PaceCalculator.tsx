@@ -137,7 +137,7 @@ const PaceCalculator: FC<{ teamData: TeamData }> = ({ teamData }) => {
           );
         }}
       </Transition>
-      <Accordion defaultValue={'runners'}>
+      <Accordion defaultValue={'Pace Calculator'}>
         <Accordion.Item value="runners">
           <Accordion.Control>Runners</Accordion.Control>
           <Accordion.Panel pb={4}>
@@ -145,12 +145,12 @@ const PaceCalculator: FC<{ teamData: TeamData }> = ({ teamData }) => {
             <TimeInput
               max="18:00"
               defaultValue={useMemo(
-                () => converters.dayjs.toTimeInputString(data.startTime),
+                () => converters.dayjs.toHhmmString(data.startTime),
                 [data.startTime]
               )}
               onChange={(e) => {
                 updateData((data) => {
-                  data.startTime = converters.mantine.timeInputString.toDayJS(
+                  data.startTime = converters.hhmmString.toDayJS(
                     e.target.value
                   );
                 });
@@ -247,6 +247,83 @@ const PaceCalculator: FC<{ teamData: TeamData }> = ({ teamData }) => {
             </Table>
           </Accordion.Panel>
         </Accordion.Item>
+        <Accordion.Item value={'Loops'}>
+          <Accordion.Control>Loops</Accordion.Control>
+          <Accordion.Panel pb={4}>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Loop</th>
+                  <th>Length (miles)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.loops.map((loop, index) => (
+                  <tr key={index}>
+                    <td>
+                      <Input
+                        value={loop.name}
+                        onChange={(event) => {
+                          updateData((draft) => {
+                            draft.loops[index].name = event.target.value;
+                          });
+                        }}
+                      />
+                    </td>
+                    <td>
+                      <Input
+                        type="number"
+                        defaultValue={data.loops[index].lengthMiles}
+                        onChange={(event) => {
+                          updateData((data) => {
+                            data.loops[index].lengthMiles = Number(
+                              event.target.value
+                            );
+                          });
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Accordion.Panel>
+        </Accordion.Item>
+        <Accordion.Item value={'Pace Calculator'}>
+          <Accordion.Control>Pace Calculator</Accordion.Control>
+          <Accordion.Panel pb={4}>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Estimated Trail Pace (minutes per mile)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.runners.map((runner) => (
+                  <tr key={runner.id}>
+                    <td>{runner.name}</td>
+                    <td>
+                      {converters.mmssString.applyMultiplier(
+                        runner.pace10k,
+                        data.trailRunMultiplierLow
+                      )}
+                      -
+                      {converters.mmssString.applyMultiplier(
+                        runner.pace10k,
+                        data.trailRunMultiplierHigh
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Accordion.Panel>
+        </Accordion.Item>
+        <Accordion.Item value={'Estimated Start/Finish Times'}>
+          <Accordion.Control>Estimated Start/Finish Times</Accordion.Control>
+          <Accordion.Panel pb={4}>deets</Accordion.Panel>
+        </Accordion.Item>
       </Accordion>
     </Box>
   );
@@ -285,15 +362,15 @@ function moveDown<T>(a: T[], index: number) {
 //       />
 //       <TableContainer>
 //         <Table size="sm">
-//           <Thead>
+//           <thead>
 //             <tr>
-//               <Th>#</Th>
-//               <Th>Name</Th>
-//               <Th>10k pace (minutes per mile)</Th>
-//               <Th>Move</Th>
+//               <th>#</th>
+//               <th>Name</th>
+//               <th>10k pace (minutes per mile)</th>
+//               <th>Move</th>
 //             </tr>
-//           </Thead>
-//           <Tbody>
+//           </thead>
+//           <tbody>
 //             {data.runners.map((runner, index) => (
 //               <tr key={index}>
 //                 <td>{index + 1}</td>
@@ -355,7 +432,7 @@ function moveDown<T>(a: T[], index: number) {
 //                 </td>
 //               </tr>
 //             ))}
-//           </Tbody>
+//           </tbody>
 //         </Table>
 //       </TableContainer>
 //     </AccordionPanel>
@@ -372,13 +449,13 @@ function moveDown<T>(a: T[], index: number) {
 //     <AccordionPanel pb={4}>
 //       <TableContainer>
 //         <Table size="sm">
-//           <Thead>
+//           <thead>
 //             <tr>
-//               <Th>Loop</Th>
-//               <Th>Length (miles)</Th>
+//               <th>Loop</th>
+//               <th>Length (miles)</th>
 //             </tr>
-//           </Thead>
-//           <Tbody>
+//           </thead>
+//           <tbody>
 //             {data.loops.map((loop, index) => (
 //               <tr key={index}>
 //                 <td>
@@ -405,7 +482,7 @@ function moveDown<T>(a: T[], index: number) {
 //                 </td>
 //               </tr>
 //             ))}
-//           </Tbody>
+//           </tbody>
 //         </Table>
 //       </TableContainer>
 //     </AccordionPanel>
@@ -422,13 +499,13 @@ function moveDown<T>(a: T[], index: number) {
 //     <AccordionPanel pb={4}>
 //       <TableContainer>
 //         <Table size="sm">
-//           <Thead>
+//           <thead>
 //             <tr>
-//               <Th>Name</Th>
-//               <Th>Estimated Trail Pace (minutes per mile)</Th>
+//               <th>Name</th>
+//               <th>Estimated Trail Pace (minutes per mile)</th>
 //             </tr>
-//           </Thead>
-//           <Tbody>
+//           </thead>
+//           <tbody>
 //             {data.runners.map((runner, index) => (
 //               <tr key={index}>
 //                 <td>{runner.name}</td>
@@ -449,7 +526,7 @@ function moveDown<T>(a: T[], index: number) {
 //                 </td>
 //               </tr>
 //             ))}
-//           </Tbody>
+//           </tbody>
 //         </Table>
 //       </TableContainer>
 //       <InputGroup>
@@ -494,16 +571,16 @@ function moveDown<T>(a: T[], index: number) {
 //     <AccordionPanel pb={4}>
 //       <TableContainer>
 //         <Table size="sm">
-//           <Thead>
+//           <thead>
 //             <tr>
-//               <Th>#</Th>
-//               <Th>Loop</Th>
-//               <Th>Runner</Th>
-//               <Th>Estimated Finish Time</Th>
-//               <Th>Actual Finish Time</Th>
+//               <th>#</th>
+//               <th>Loop</th>
+//               <th>Runner</th>
+//               <th>Estimated Finish Time</th>
+//               <th>Actual Finish Time</th>
 //             </tr>
-//           </Thead>
-//           <Tbody>
+//           </thead>
+//           <tbody>
 //             {useMemo(() => computeFinishTimesTable(data), [data]).map(
 //               (finishTimeData, index) => (
 //                 <tr key={index} className={css`
@@ -566,7 +643,7 @@ function moveDown<T>(a: T[], index: number) {
 //                 </tr>
 //               )
 //             )}
-//           </Tbody>
+//           </tbody>
 //         </Table>
 //       </TableContainer>
 //     </AccordionPanel>

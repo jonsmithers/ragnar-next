@@ -2,10 +2,12 @@ import { TeamCreateResponses } from '@/app/TeamNameInput';
 import { converters, defaultTime } from '@/app/date-utils';
 import { getDb } from '@/app/db/connection';
 import { loops, runners, teams } from '@/app/db/schema';
+import dayjs from 'dayjs';
 import { InferModel } from 'drizzle-orm';
 import { eq, inArray } from 'drizzle-orm/expressions';
-import { Duration } from 'luxon';
 import z from 'zod';
+
+// TODO remove use dayjs instead of luxon
 
 /** get or create team */
 export async function PATCH(request: Request) {
@@ -91,7 +93,7 @@ export async function PATCH(request: Request) {
 }
 
 const defaultRunner = {
-  pace10k: converters.duration.toString(
-    Duration.fromObject({ minutes: 9, seconds: 30 })
+  pace10k: converters.dayjsDuration.toMmssString(
+    dayjs.duration({ minutes: 9, seconds: 30 })
   ),
 };
