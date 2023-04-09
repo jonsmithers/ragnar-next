@@ -1,38 +1,58 @@
-// import { Text } from '@chakra-ui/react';
-import { Box, Button, Input } from '@mantine/core';
+'use client';
+import { Box, Button, Input, LoadingOverlay } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconCheck, IconRun } from '@tabler/icons-react';
+import {
+  IconAlertCircleFilled,
+  IconConfetti,
+  IconRun,
+} from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
 import { FC, useCallback, useState } from 'react';
+import z from 'zod';
+
+const TeamCreateResponsesZod = z.enum(['created new team', 'already exists']);
+export type TeamCreateResponses = z.infer<typeof TeamCreateResponsesZod>;
 
 export const TeamNameInput: FC<Record<string, unknown>> = () => {
+  const router = useRouter();
   const [value, setValue] = useState('');
-  // const [, setLocation] = useLocation();
-  // const toast = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const submit = useCallback(async () => {
-    notifications.show({
-      title: 'hi',
-      message: 'a',
-      icon: <IconCheck />,
-    });
-    await fetch('/api/team', {
-      method: 'PATCH',
-      body: JSON.stringify({ name: value }),
-    });
-    // toast({ title: 'todo', status: 'info' });
-    // try {
-    //   // await signInOrMakeTeamAccount(value);
-    //   if (!await Team.existsByName(value)) {
-    //     const newTeam = await Team.insert({name: value});
-    //     console.log('newTeam', newTeam);
-    //   }
-    //   setLocation(`/team/${value}`);
-    // } catch(e) {
-    //   toast({
-    //     title: 'Error 😕',
-    //     status: 'error',
-    //   });
-    // }
-  }, [value]);
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/team', {
+        method: 'PATCH',
+        body: JSON.stringify({ name: value }),
+      });
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      const data = TeamCreateResponsesZod.parse(await response.text());
+      if (data === 'created new team') {
+        notifications.show({
+          icon: <IconConfetti />,
+          title: 'New team!',
+          message: '🏃 🏃 🏃',
+        });
+      }
+      router.push(`/team/${value}`);
+    } catch (e) {
+      console.error(e);
+      notifications.show({
+        title: 'Crap 💩',
+        message: (
+          <>
+            something broke
+            <br />({String(e)})
+          </>
+        ),
+        icon: <IconAlertCircleFilled />,
+        color: 'red',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router, value]);
   return (
     <Box display="flex" sx={{ gap: 8 }}>
       <Input value={value} onChange={(e) => setValue(e.target.value)}></Input>
@@ -44,6 +64,7 @@ export const TeamNameInput: FC<Record<string, unknown>> = () => {
       >
         Go
       </Button>
+      <LoadingOverlay visible={isLoading} />
     </Box>
   );
 };

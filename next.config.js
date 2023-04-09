@@ -3,8 +3,11 @@
 const nextConfig = {
   experimental: {
     appDir: true,
-    serverComponentsExternalPackages: ["mysql2"],
+    serverComponentsExternalPackages: ['mysql2'],
   },
-}
+  compiler: {
+    styledComponents: true,
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1680458879648,
-      "tag": "0000_exotic_galactus",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1680613061458,
-      "tag": "0001_numerous_tiger_shark",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1680613378202,
-      "tag": "0002_flashy_cerise",
+      "when": 1681009372352,
+      "tag": "0000_lazy_venus",
       "breakpoints": true
     }
   ]
