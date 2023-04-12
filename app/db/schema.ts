@@ -22,6 +22,7 @@ export const runners = mysqlTable('runners', {
   teamId: idField('team_id'), //.references(() => teams.id),
   order: bigint('order', { mode: 'number' }).notNull(),
   name: varchar('name', { length: 256 }).notNull(),
+  /** mm:ss per mile */
   pace10k: varchar('pace_10k', { length: 50 }).notNull(),
 });
 
@@ -38,4 +39,5 @@ export const actualFinishTimes = mysqlTable('actual_finish_times', {
   id: idField('id').autoincrement().primaryKey(),
   runnerId: idField('runner_id'), //.references(() => runners.id),
   loopId: idField('loop_id'), //.references(() => loops.id),
+  finishTime: datetime('finish_time_hhmm').notNull(),
 });

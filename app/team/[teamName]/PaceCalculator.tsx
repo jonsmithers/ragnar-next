@@ -1,10 +1,11 @@
 'use client';
-import { converters } from '@/app/date-utils';
+import { TeamReactState, converters } from '@/app/date-utils';
 import type { TeamData } from '@/server-utils/TeamDataZod';
 import {
   Accordion,
   ActionIcon,
   Box,
+  CloseButton,
   Group,
   Input,
   Loader,
@@ -22,10 +23,13 @@ import {
   IconArrowUp,
   IconDeviceFloppy,
 } from '@tabler/icons-react';
+import dayjs, { Dayjs } from 'dayjs';
+import { Duration } from 'dayjs/plugin/duration';
 import { FC, Suspense, useEffect, useMemo, useState } from 'react';
 import { PatternFormat, PatternFormatProps } from 'react-number-format';
 import { useImmer } from 'use-immer';
-import { useDebounce } from '../utils/useDebounce';
+import { useOnDebounce } from '../utils/useDebounce';
+import { FinishTime, useFinishTimes } from '../utils/useFinishTimes';
 import { useTeamData } from '../utils/useTeamData';
 
 const DurationInput = (props: Omit<PatternFormatProps, 'format'>) => {
@@ -55,53 +59,65 @@ interface PaceCalculatorProps {
   teamName: string;
 }
 
-const PaceCalculator: FC<{ teamData: TeamData }> = ({ teamData }) => {
+const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTime[] }> = ({
+  teamData: teamServerData,
+  finishTimes: finishTimesServerData,
+}) => {
+  const [finishTimes, updateFinishTimes] = useImmer<
+    PartialBy<FinishTime, 'id'>[]
+  >(finishTimesServerData);
   const [data, updateData] = useImmer(() =>
-    converters.teamDbData.toReactState(teamData)
+    converters.teamDbData.toReactState(teamServerData)
   );
   const [initialData] = useState(data);
-  const { mutate } = useTeamData(teamData.name);
+  const { mutate } = useTeamData(teamServerData.name);
+  console.log('finishTimes', finishTimes);
 
-  const { debouncedValue: debouncedData, isDebouncing } = useDebounce(
-    data,
-    1000
-  );
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    if (debouncedData === 'not yet' || debouncedData === initialData) {
-      return;
-    }
-    setIsSaving(true);
-    (async () => {
-      const dbData = converters.teamReactState.toDbData(debouncedData);
-      try {
-        const r = await fetch(`/api/team/${debouncedData.name}`, {
-          method: 'POST',
-          body: JSON.stringify(dbData),
-        });
-        if (!r.ok) {
-          throw new Error(r.statusText);
-        }
-        mutate(dbData);
-      } catch (e) {
-        console.error(e);
-        notifications.show({
-          title: 'Crap 💩',
-          message: (
-            <>
-              Unable to save
-              <br />({String(e)})
-            </>
-          ),
-          icon: <IconAlertCircleFilled />,
-          color: 'red',
-        });
-      } finally {
-        setIsSaving(false);
+  const { isDebouncing: isDebouncingData } = useOnDebounce(
+    data,
+    () => {
+      if (data === initialData) {
+        return;
       }
-    })();
-  }, [debouncedData, initialData, mutate]);
+      setIsSaving(true);
+      (async () => {
+        const dbData = converters.teamReactState.toDbData(data);
+        try {
+          const r = await fetch(`/api/team/${data.name}`, {
+            method: 'POST',
+            body: JSON.stringify(dbData),
+          });
+          if (!r.ok) {
+            throw new Error(r.statusText);
+          }
+          mutate(dbData);
+        } catch (e) {
+          console.error(e);
+          notifications.show({
+            title: 'Crap 💩',
+            message: (
+              <>
+                Unable to save
+                <br />({String(e)})
+              </>
+            ),
+            icon: <IconAlertCircleFilled />,
+            color: 'red',
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      })();
+    },
+    process.env.NODE_ENV === 'development' ? 1000 : 5000
+  );
+
+  const showSavingIndicator = useMemo(
+    () => isSaving || (isDebouncingData && data !== initialData),
+    [data, initialData, isDebouncingData, isSaving]
+  );
 
   return (
     <Box
@@ -111,7 +127,7 @@ const PaceCalculator: FC<{ teamData: TeamData }> = ({ teamData }) => {
       }}
     >
       <Transition
-        mounted={isDebouncing || isSaving}
+        mounted={showSavingIndicator}
         transition="fade"
         duration={400}
         timingFunction="ease"
@@ -322,7 +338,103 @@ const PaceCalculator: FC<{ teamData: TeamData }> = ({ teamData }) => {
         </Accordion.Item>
         <Accordion.Item value={'Estimated Start/Finish Times'}>
           <Accordion.Control>Estimated Start/Finish Times</Accordion.Control>
-          <Accordion.Panel pb={4}>deets</Accordion.Panel>
+          <Accordion.Panel pb={4}>
+            <Table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Loop</th>
+                  <th>Runner</th>
+                  <th>Estimated Finish Time</th>
+                  <th>Actual Finish Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {useMemo(
+                  () => computeFinishTimesTable(data, finishTimes),
+                  [data, finishTimes]
+                ).map((finishTimeData, index) => (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+                    <td>{finishTimeData.loop.name}</td>
+                    <td>{finishTimeData.runner.name}</td>
+                    <td>
+                      {converters.dayjs.toHuman(
+                        finishTimeData.estimatedLoopFinishLow
+                      )}
+                      -
+                      {converters.dayjs.toHuman(
+                        finishTimeData.estimatedLoopFinishHigh
+                      )}
+                    </td>
+                    <td>
+                      <Group sx={{ gap: 1 }}>
+                        <TimeInput
+                          min={converters.dayjs.toHhmmString(
+                            finishTimeData.minimumAllowedFinishTime
+                          )}
+                          value={converters.date.toHhmmString(
+                            finishTimes.find(
+                              ({ runnerId, loopId }) =>
+                                loopId === finishTimeData.loop.id &&
+                                runnerId === finishTimeData.runner.id
+                            )?.finishTime
+                          )}
+                          onChange={(e) => {
+                            const newTime = converters.hhmmString.toDate(
+                              e.target.value
+                            );
+                            updateFinishTimes((finishTimes) => {
+                              const actualFinishTime = finishTimes.find(
+                                ({ runnerId, loopId }) =>
+                                  loopId === finishTimeData.loop.id &&
+                                  runnerId === finishTimeData.runner.id
+                              );
+                              if (actualFinishTime) {
+                                actualFinishTime.finishTime = newTime;
+                              } else {
+                                finishTimes.push({
+                                  id: undefined, // im here NOT DONE HERE
+                                  runnerId: finishTimeData.runner.id,
+                                  loopId: finishTimeData.loop.id,
+                                  finishTime: newTime,
+                                });
+                              }
+                            });
+                          }}
+                          rightSection={
+                            <CloseButton
+                              variant="light"
+                              disabled={
+                                !Boolean(
+                                  finishTimes.find(
+                                    ({ runnerId, loopId }) =>
+                                      loopId === finishTimeData.loop.id &&
+                                      runnerId === finishTimeData.runner.id
+                                  )
+                                )
+                              }
+                              onClick={() => {
+                                updateFinishTimes((finishTimes) => {
+                                  const index = finishTimes.findIndex(
+                                    ({ runnerId, loopId }) =>
+                                      runnerId === finishTimeData.runner.id &&
+                                      loopId == finishTimeData.loop.id
+                                  );
+                                  finishTimes.splice(index, 1);
+                                });
+                              }}
+                              size="sm"
+                            />
+                          }
+                        />
+                      </Group>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
     </Box>
@@ -336,239 +448,6 @@ function moveDown<T>(a: T[], index: number) {
   a.splice(index + 1, 0, ...a.splice(index, 1));
 }
 
-//   <AccordionItem>
-//     <h2>
-//       <AccordionButton>
-//         <Box flex="1" textAlign="left">
-//           Runners
-//         </Box>
-//         <AccordionIcon />
-//       </AccordionButton>
-//     </h2>
-//     <AccordionPanel pb={4}>
-//       <Text>Team Start Time</Text>
-//       <CustomTimeField
-//         value={data.teamStartTime}
-//         onChange={(newStartTime) => {
-//           updateData((data) => {
-//             data.teamStartTime = newStartTime;
-//           });
-//         }}
-//         onClear={() => {
-//           updateData((data) => {
-//             data.teamStartTime = DateTime.fromObject(defaultDateValues);
-//           });
-//         }}
-//       />
-//       <TableContainer>
-//         <Table size="sm">
-//           <thead>
-//             <tr>
-//               <th>#</th>
-//               <th>Name</th>
-//               <th>10k pace (minutes per mile)</th>
-//               <th>Move</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {data.runners.map((runner, index) => (
-//               <tr key={index}>
-//                 <td>{index + 1}</td>
-//                 <td className={css`
-//                   min-width: 150px;
-//                 `}>
-//                   <Input
-//                     size="sm"
-//                     value={runner.name}
-//                     onChange={(event) => {
-//                       updateData((draft) => {
-//                         draft.runners[index].name = event.target.value;
-//                       });
-//                     }}
-//                   />
-//                 </td>
-//                 <td>
-//                   <Input
-//                     size="sm"
-//                     as={DurationInput}
-//                     value={userInput.runners[index].pace_10k}
-//                     onChange={(event) => {
-//                       updateUserInput((userInput) => {
-//                         userInput.runners[index].pace_10k =
-//                           event.target.value;
-//                       });
-//                     }}
-//                   />
-//                 </td>
-//                 <td>
-//                   <ButtonGroup isAttached>
-//                     <IconButton
-//                       icon={<ArrowUpIcon />}
-//                       disabled={index === 0}
-//                       aria-label="move up"
-//                       onClick={() => {
-//                         updateData((data) => {
-//                           moveUp(data.runners, index);
-//                         });
-//                         updateUserInput((draft) => {
-//                           moveUp(draft.runners, index);
-//                         });
-//                       }}
-//                     />
-//                     <IconButton
-//                       icon={<ArrowDownIcon />}
-//                       disabled={index === data.runners.length - 1}
-//                       aria-label="move down"
-//                       onClick={() => {
-//                         updateData((data) => {
-//                           moveDown(data.runners, index);
-//                         });
-//                         updateUserInput((draft) => {
-//                           moveDown(draft.runners, index);
-//                         });
-//                       }}
-//                     />
-//                   </ButtonGroup>
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </Table>
-//       </TableContainer>
-//     </AccordionPanel>
-//   </AccordionItem>
-//   <AccordionItem>
-//     <h2>
-//       <AccordionButton>
-//         <Box flex="1" textAlign="left">
-//           Loops
-//         </Box>
-//         <AccordionIcon />
-//       </AccordionButton>
-//     </h2>
-//     <AccordionPanel pb={4}>
-//       <TableContainer>
-//         <Table size="sm">
-//           <thead>
-//             <tr>
-//               <th>Loop</th>
-//               <th>Length (miles)</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {data.loops.map((loop, index) => (
-//               <tr key={index}>
-//                 <td>
-//                   <Input
-//                     value={loop.name}
-//                     onChange={(event) => {
-//                       updateData((draft) => {
-//                         draft.loops[index].name = event.target.value;
-//                       });
-//                     }}
-//                   />
-//                 </td>
-//                 <td>
-//                   <Input
-//                     type="number"
-//                     value={userInput.loops[index].length_miles}
-//                     onChange={(event) => {
-//                       updateUserInput((userInput) => {
-//                         userInput.loops[index].length_miles =
-//                           event.target.value;
-//                       });
-//                     }}
-//                   />
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </Table>
-//       </TableContainer>
-//     </AccordionPanel>
-//   </AccordionItem>
-//   <AccordionItem>
-//     <h2>
-//       <AccordionButton>
-//         <Box flex="1" textAlign="left">
-//           Pace Calculator
-//         </Box>
-//         <AccordionIcon />
-//       </AccordionButton>
-//     </h2>
-//     <AccordionPanel pb={4}>
-//       <TableContainer>
-//         <Table size="sm">
-//           <thead>
-//             <tr>
-//               <th>Name</th>
-//               <th>Estimated Trail Pace (minutes per mile)</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {data.runners.map((runner, index) => (
-//               <tr key={index}>
-//                 <td>{runner.name}</td>
-//                 <td>
-//                   {converters.duration.toString(
-//                     converters.duration.applyMultiplier(
-//                       runner.pace_10k,
-//                       data.trailRunMultiplierLow
-//                     )
-//                   )}
-//                   -
-//                   {converters.duration.toString(
-//                     converters.duration.applyMultiplier(
-//                       runner.pace_10k,
-//                       data.trailRunMultiplierHigh
-//                     )
-//                   )}
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </Table>
-//       </TableContainer>
-//       <InputGroup>
-//         <Text fontSize="xs">Trail Running Pace Multiplier (low)</Text>
-//         <Input
-//           value={data.trailRunMultiplierLow}
-//           type="number"
-//           size="sm"
-//           onChange={(event) => {
-//             updateData((data) => {
-//               data.trailRunMultiplierLow =
-//                 parseFloat(event.target.value) || 1.1;
-//             });
-//           }}
-//         />
-//       </InputGroup>
-//       <InputGroup>
-//         <Text fontSize="xs">Trail Running Pace Multiplier (high)</Text>
-//         <Input
-//           value={data.trailRunMultiplierHigh}
-//           type="number"
-//           size="sm"
-//           onChange={(event) => {
-//             updateData((data) => {
-//               data.trailRunMultiplierHigh =
-//                 parseFloat(event.target.value) || 1.2;
-//             });
-//           }}
-//         />
-//       </InputGroup>
-//     </AccordionPanel>
-//   </AccordionItem>
-//   <AccordionItem>
-//     <h2>
-//       <AccordionButton>
-//         <Box flex="1" textAlign="left">
-//           Estimated Start/Finish Times
-//         </Box>
-//         <AccordionIcon />
-//       </AccordionButton>
-//     </h2>
-//     <AccordionPanel pb={4}>
 //       <TableContainer>
 //         <Table size="sm">
 //           <thead>
@@ -651,6 +530,11 @@ function moveDown<T>(a: T[], index: number) {
 
 const PaceCalculatorWithFetch: FC<PaceCalculatorProps> = ({ teamName }) => {
   const { teamData, error, isLoading } = useTeamData(teamName);
+  const {
+    finishTimes,
+    error: finishTimesError,
+    isLoading: finishTimesIsLoading,
+  } = useFinishTimes(teamName);
 
   useEffect(() => {
     if (error) {
@@ -662,10 +546,23 @@ const PaceCalculatorWithFetch: FC<PaceCalculatorProps> = ({ teamName }) => {
       });
     }
   }, [error]);
+  useEffect(() => {
+    if (finishTimesError) {
+      notifications.show({
+        title: 'Crap 💩',
+        message: String(finishTimesError),
+        icon: <IconAlertCircleFilled />,
+        color: 'red',
+      });
+    }
+  }, [finishTimesError]);
+
   return (
     <>
-      <LoadingOverlay visible={isLoading} />
-      {teamData && <PaceCalculator teamData={teamData} />}
+      <LoadingOverlay visible={isLoading || finishTimesIsLoading} />
+      {teamData && finishTimes && (
+        <PaceCalculator teamData={teamData} finishTimes={finishTimes} />
+      )}
     </>
   );
 };
@@ -680,3 +577,77 @@ export const PaceCalculatorWithSuspense: FC<PaceCalculatorProps> = (props) => {
     </>
   );
 };
+
+function computeFinishTimesTable(
+  data: TeamReactState,
+  finishTimes: PartialBy<FinishTime, 'id'>[]
+) {
+  const results: {
+    loop: TeamReactState['loops'][number];
+    runner: TeamReactState['runners'][number];
+    paceLow: Duration;
+    paceHigh: Duration;
+    loopTimeLow: Duration;
+    loopTimeHigh: Duration;
+    minimumAllowedFinishTime: Dayjs;
+    estimatedLoopFinishLow: Dayjs;
+    estimatedLoopFinishHigh: Dayjs;
+  }[] = [];
+  for (
+    let index = 0;
+    index < data.runners.length * data.loops.length;
+    index++
+  ) {
+    const runner = data.runners[index % data.runners.length];
+    const loop = data.loops[index % data.loops.length];
+    const previousRunner =
+      index > 0 ? data.runners[(index - 1) % data.runners.length] : undefined;
+    const previousLoop =
+      index > 0 ? data.loops[(index - 1) % data.loops.length] : undefined;
+    const previousFinishTime = finishTimes.find(
+      ({ runnerId, loopId }) =>
+        loopId === previousLoop?.id && runnerId === previousRunner?.id
+    );
+    const pace10kDuration = converters.mmssString.toDayJsDuration(
+      runner.pace10k
+    );
+    const paceLow = dayjs.duration(
+      data.trailRunMultiplierLow * pace10kDuration.asMilliseconds()
+    );
+    const paceHigh = dayjs.duration(
+      data.trailRunMultiplierHigh * pace10kDuration.asMilliseconds()
+    );
+    const loopTimeLow = dayjs.duration(
+      loop.lengthMiles * paceLow.asMilliseconds()
+    );
+    const loopTimeHigh = dayjs.duration(
+      loop.lengthMiles * paceHigh.asMilliseconds()
+    );
+
+    const previousFinishTimeDayJs =
+      previousFinishTime?.finishTime === undefined
+        ? undefined
+        : dayjs(previousFinishTime?.finishTime);
+    const loopStartTimeLow =
+      index === 0
+        ? data.startTime
+        : previousFinishTimeDayJs ?? results[index - 1].estimatedLoopFinishLow;
+    const loopStartTimeHigh =
+      index === 0
+        ? data.startTime
+        : previousFinishTimeDayJs ?? results[index - 1].estimatedLoopFinishHigh;
+    results.push({
+      loop,
+      runner,
+      paceLow,
+      paceHigh,
+      loopTimeLow,
+      loopTimeHigh,
+      minimumAllowedFinishTime: loopStartTimeLow,
+      estimatedLoopFinishLow: loopStartTimeLow.add(loopTimeLow),
+      estimatedLoopFinishHigh: loopStartTimeHigh.add(loopTimeHigh),
+    });
+  }
+  return results;
+}
+type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

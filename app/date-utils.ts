@@ -52,15 +52,35 @@ export const converters = {
     },
   },
   dayjs: {
-    toHhmmString(d: Dayjs) {
+    toHhmmString(d: Dayjs | undefined) {
+      if (d === undefined) {
+        return '';
+      }
       return d.format('HH[:]mm').toString();
     },
+    toHuman(d: Dayjs | undefined) {
+      if (d === undefined) {
+        return '';
+      }
+      return d.format('h[:]mm a').toString();
+    }
+  },
+  date: {
+    toHhmmString(d: Date | undefined) {
+      if (d === undefined) {
+        return '';
+      }
+      return converters.dayjs.toHhmmString(dayjs(d))
+    }
   },
   hhmmString: {
     toDayJS(s: string) {
       const [hours, minutes] = s.split(':');
       return dayjs({ ...defaultDayJsValues, hours, minutes });
     },
+    toDate(s: string) {
+      return converters.hhmmString.toDayJS(s).toDate();
+    }
   },
   mmssString: {
     toDayJsDuration(s: string) {
@@ -68,14 +88,7 @@ export const converters = {
       return dayjs.duration({ minutes, seconds });
     },
     applyMultiplier(d: string, multiplier: number) {
-      console.log('applyMultiplier()', d, multiplier);
       const duration = converters.mmssString.toDayJsDuration(d);
-      console.log('duration', duration);
-      console.log('duration ms', duration.asMinutes());
-      console.log(
-        'multipledi mins',
-        dayjs.duration(multiplier * duration.asMilliseconds()).asMinutes()
-      );
       return converters.dayjsDuration.toMmssString(
         dayjs.duration(multiplier * duration.asMilliseconds())
       );
@@ -94,20 +107,4 @@ export const converters = {
       return d.format('mm[:]ss').toString();
     }
   },
-  // duration: {
-  //   /** for text input */
-  //   toString(d: Duration) {
-  //     return d.toISOTime()!.slice(3, 8);
-  //   },
-  //   toHuman(t: Duration) {
-  //     const hours = t.get('hours');
-  //     const isPm = hours % 24 > 12;
-  //     if (isPm) {
-  //       t = t.set({ hours: hours % 12 });
-  //     } else {
-  //       t = t.set({ hours: hours % 24 });
-  //     }
-  //     return `${t.toFormat('hh:mm')} ${isPm ? 'PM' : 'AM'}`;
-  //   },
-  // },
 };

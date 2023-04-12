@@ -1,0 +1,1 @@
+ALTER TABLE actual_finish_times ADD `finish_time_hhmm` datetime NOT NULL;

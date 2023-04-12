@@ -2,10 +2,7 @@ import type { TeamData } from '@/server-utils/TeamDataZod';
 import { useMemo } from 'react';
 import useSWR from 'swr';
 import z from 'zod';
-const fetcher = (url: string) =>
-  fetch(url).then((res) =>
-    res.ok ? res.json() : res.text().then((text) => Promise.reject(text))
-  );
+import { fetcher } from './fetcher';
 
 export function useTeamData(teamName: string) {
   const { data, ...result } = useSWR<TeamData>(
@@ -47,4 +44,12 @@ const TeamDataZodClient = z.object({
       lengthMiles: z.number(),
     })
   ),
+  // actualFinishTimes: z.array(
+  //   z.object({
+  //     id: z.number(),
+  //     runnerId: z.number(),
+  //     loopId: z.number(),
+  //     finishTime: z.string().transform((s) => new Date(s)),
+  //   })
+  // ),
 });

@@ -1,7 +1,7 @@
 import { getDb } from '@/app/db/connection';
-import { loops, runners, teams } from '@/app/db/schema';
+import { actualFinishTimes, loops, runners, teams } from '@/app/db/schema';
 import { TeamData, TeamDataZod } from '@/server-utils/TeamDataZod';
-import { eq } from 'drizzle-orm/expressions';
+import { eq, inArray } from 'drizzle-orm/expressions';
 import { omit } from 'lodash';
 import z from 'zod';
 
@@ -14,6 +14,16 @@ export async function GET(_request: Request, { params }: { params: unknown }) {
     db.select().from(runners).where(eq(runners.teamId, team.id)),
     db.select().from(loops).where(eq(loops.teamId, team.id)),
   ]);
+
+  // const teamFinishTimes = await db
+  //   .select()
+  //   .from(actualFinishTimes)
+  //   .where(
+  //     inArray(
+  //       actualFinishTimes.runnerId,
+  //       teamRunners.map(({ id }) => id)
+  //     )
+  //   );
 
   const teamData: TeamData = {
     ...team,
