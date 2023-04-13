@@ -6,7 +6,17 @@ export default async function Page({
 }) {
   return (
     <>
-      <PaceCalculatorWithSuspense teamName={teamName} />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <PaceCalculatorWithSuspense teamName={teamName} />
+      </div>
     </>
   );
 }
