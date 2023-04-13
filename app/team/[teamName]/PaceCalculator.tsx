@@ -59,10 +59,10 @@ interface PaceCalculatorProps {
   teamName: string;
 }
 
-const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTimeState[] }> = ({
-  teamData: teamServerData,
-  finishTimes: finishTimesServerData,
-}) => {
+const PaceCalculator: FC<{
+  teamData: TeamData;
+  finishTimes: FinishTimeState[];
+}> = ({ teamData: teamServerData, finishTimes: finishTimesServerData }) => {
   const [finishTimes, updateFinishTimes] = useImmer<
     PartialBy<FinishTimeState, 'id'>[]
   >(finishTimesServerData);
@@ -73,7 +73,6 @@ const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTimeState[] }>
   const [initialFinishTimes] = useState(finishTimes);
   const { mutate: mutateTeamData } = useTeamData(teamServerData.name);
   const { mutate: mutateFinishTimes } = useFinishTimes(teamServerData.name);
-  console.log('finishTimes', finishTimes);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -158,7 +157,15 @@ const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTimeState[] }>
       isSaving ||
       (isDebouncingData && data !== initialData) ||
       (isDebouncingFinishTimes && finishTimes !== initialFinishTimes),
-    [data, finishTimes, initialData, initialFinishTimes, isDebouncingData, isDebouncingFinishTimes, isSaving]
+    [
+      data,
+      finishTimes,
+      initialData,
+      initialFinishTimes,
+      isDebouncingData,
+      isDebouncingFinishTimes,
+      isSaving,
+    ]
   );
 
   return (
@@ -243,13 +250,12 @@ const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTimeState[] }>
                         size="sm"
                         component={DurationInput}
                         defaultValue={runner.pace10k}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          if (value.includes('-')) {
+                        onValueChange={({ formattedValue }) => {
+                          if (!formattedValue || formattedValue.includes('-')) {
                             return;
                           }
                           updateData((data) => {
-                            data.runners[index].pace10k = event.target.value;
+                            data.runners[index].pace10k = formattedValue;
                           });
                         }}
                       />
