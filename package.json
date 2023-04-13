@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "tsx app/db/run-migrations.ts && next build",
     "start": "next start",
     "lint": "next lint",
     "generate-migration": "npx drizzle-kit generate:mysql --out migrations/ --schema app/db/schema.ts --breakpoints"
@@ -41,6 +41,7 @@
     "react-dom": "18.2.0",
     "react-number-format": "^5.1.4",
     "swr": "^2.1.2",
+    "tsx": "^3.12.6",
     "typescript": "5.0.3",
     "use-immer": "^0.9.0",
     "vercel": "^28.18.4"
