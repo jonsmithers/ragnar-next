@@ -186,7 +186,7 @@ const PaceCalculator: FC<{
             <Paper
               style={styles}
               sx={{
-                position: 'absolute',
+                position: 'fixed',
                 top: 8,
                 right: 8,
                 padding: 8,
