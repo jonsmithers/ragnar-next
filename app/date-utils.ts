@@ -4,6 +4,8 @@ import duration, { Duration } from 'dayjs/plugin/duration';
 import objectSupport from 'dayjs/plugin/objectSupport';
 import { sortBy } from 'lodash';
 import { DateObjectUnits, DateTime } from 'luxon';
+import { FinishTimeState } from './team/utils/useFinishTimes';
+import { FinishTime } from '@/server-utils/FinishTimeZod';
 dayjs.extend(objectSupport);
 dayjs.extend(duration);
 

@@ -3534,9 +3534,9 @@ drizzle-kit@^0.17.1:
     zod "^3.20.2"
 
 drizzle-orm@^0.23.4:
-  version "0.23.8"
-  resolved "https://registry.yarnpkg.com/drizzle-orm/-/drizzle-orm-0.23.8.tgz#ee69c267c1881f0496e099113551754f6d7e619a"
-  integrity sha512-jdqS8+aiYWGI5ub4rhc2dEVqCeuYGF78m3XCVYVLaI2UzsKfhp/l3pretOsRMrzOSOM6naTB1BJugMY70VLv/w==
+  version "0.23.11"
+  resolved "https://registry.yarnpkg.com/drizzle-orm/-/drizzle-orm-0.23.11.tgz#863309afcb6798e7aab874fde03a965ca5001713"
+  integrity sha512-uqebUff9QeDo0ZI+s5XurmHjFNDuQMbnNObWIClzotU+iI0RfA1RSEXbK3lSp1FNp/HeUy23yIv8lkYzU9278A==
 
 drizzle-zod@^0.2.1:
   version "0.2.1"

@@ -29,7 +29,7 @@ import { FC, Suspense, useEffect, useMemo, useState } from 'react';
 import { PatternFormat, PatternFormatProps } from 'react-number-format';
 import { useImmer } from 'use-immer';
 import { useOnDebounce } from '../utils/useDebounce';
-import { FinishTime, useFinishTimes } from '../utils/useFinishTimes';
+import { FinishTimeState, useFinishTimes } from '../utils/useFinishTimes';
 import { useTeamData } from '../utils/useTeamData';
 
 const DurationInput = (props: Omit<PatternFormatProps, 'format'>) => {
@@ -59,40 +59,41 @@ interface PaceCalculatorProps {
   teamName: string;
 }
 
-const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTime[] }> = ({
+const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTimeState[] }> = ({
   teamData: teamServerData,
   finishTimes: finishTimesServerData,
 }) => {
   const [finishTimes, updateFinishTimes] = useImmer<
-    PartialBy<FinishTime, 'id'>[]
+    PartialBy<FinishTimeState, 'id'>[]
   >(finishTimesServerData);
   const [data, updateData] = useImmer(() =>
     converters.teamDbData.toReactState(teamServerData)
   );
   const [initialData] = useState(data);
-  const { mutate } = useTeamData(teamServerData.name);
+  const [initialFinishTimes] = useState(finishTimes);
+  const { mutate: mutateTeamData } = useTeamData(teamServerData.name);
+  const { mutate: mutateFinishTimes } = useFinishTimes(teamServerData.name);
   console.log('finishTimes', finishTimes);
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const { isDebouncing: isDebouncingData } = useOnDebounce(
-    data,
+  const { isDebouncing: isDebouncingFinishTimes } = useOnDebounce(
+    finishTimes,
     () => {
-      if (data === initialData) {
+      if (finishTimes === initialFinishTimes) {
         return;
       }
       setIsSaving(true);
       (async () => {
-        const dbData = converters.teamReactState.toDbData(data);
         try {
-          const r = await fetch(`/api/team/${data.name}`, {
+          const r = await fetch(`/api/team/${data.name}/finish-times`, {
             method: 'POST',
-            body: JSON.stringify(dbData),
+            body: JSON.stringify(finishTimes),
           });
           if (!r.ok) {
             throw new Error(r.statusText);
           }
-          mutate(dbData);
+          mutateFinishTimes(finishTimes);
         } catch (e) {
           console.error(e);
           notifications.show({
@@ -111,12 +112,53 @@ const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTime[] }> = ({
         }
       })();
     },
-    process.env.NODE_ENV === 'development' ? 1000 : 5000
+    1000
+  );
+  const { isDebouncing: isDebouncingData } = useOnDebounce(
+    data,
+    () => {
+      if (data === initialData) {
+        return;
+      }
+      setIsSaving(true);
+      (async () => {
+        const dbData = converters.teamReactState.toDbData(data);
+        try {
+          const r = await fetch(`/api/team/${data.name}`, {
+            method: 'POST',
+            body: JSON.stringify(dbData),
+          });
+          if (!r.ok) {
+            throw new Error(r.statusText);
+          }
+          mutateTeamData(dbData);
+        } catch (e) {
+          console.error(e);
+          notifications.show({
+            title: 'Crap 💩',
+            message: (
+              <>
+                Unable to save
+                <br />({String(e)})
+              </>
+            ),
+            icon: <IconAlertCircleFilled />,
+            color: 'red',
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      })();
+    },
+    1000
   );
 
   const showSavingIndicator = useMemo(
-    () => isSaving || (isDebouncingData && data !== initialData),
-    [data, initialData, isDebouncingData, isSaving]
+    () =>
+      isSaving ||
+      (isDebouncingData && data !== initialData) ||
+      (isDebouncingFinishTimes && finishTimes !== initialFinishTimes),
+    [data, finishTimes, initialData, initialFinishTimes, isDebouncingData, isDebouncingFinishTimes, isSaving]
   );
 
   return (
@@ -580,7 +622,7 @@ export const PaceCalculatorWithSuspense: FC<PaceCalculatorProps> = (props) => {
 
 function computeFinishTimesTable(
   data: TeamReactState,
-  finishTimes: PartialBy<FinishTime, 'id'>[]
+  finishTimes: PartialBy<FinishTimeState, 'id'>[]
 ) {
   const results: {
     loop: TeamReactState['loops'][number];
