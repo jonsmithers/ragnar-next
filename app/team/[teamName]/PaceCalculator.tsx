@@ -195,7 +195,7 @@ const PaceCalculator: FC<{ teamData: TeamData; finishTimes: FinishTimeState[] }>
           );
         }}
       </Transition>
-      <Accordion defaultValue={'Pace Calculator'}>
+      <Accordion defaultValue={'Estimated Start/Finish Times'}>
         <Accordion.Item value="runners">
           <Accordion.Control>Runners</Accordion.Control>
           <Accordion.Panel pb={4}>
