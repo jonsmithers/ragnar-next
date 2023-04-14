@@ -387,101 +387,103 @@ const PaceCalculator: FC<{
         <Accordion.Item value={'Estimated Start/Finish Times'}>
           <Accordion.Control>Estimated Start/Finish Times</Accordion.Control>
           <Accordion.Panel pb={4}>
-            <Table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Loop</th>
-                  <th>Runner</th>
-                  <th>Estimated Finish Time</th>
-                  <th>Actual Finish Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {useMemo(
-                  () => computeFinishTimesTable(data, finishTimes),
-                  [data, finishTimes]
-                ).map((finishTimeData, index) => (
-                  <tr key={index}>
-                    <td>{index + 1}</td>
-                    <td>{finishTimeData.loop.name}</td>
-                    <td>{finishTimeData.runner.name}</td>
-                    <td>
-                      {converters.dayjs.toHuman(
-                        finishTimeData.estimatedLoopFinishLow
-                      )}
-                      -
-                      {converters.dayjs.toHuman(
-                        finishTimeData.estimatedLoopFinishHigh
-                      )}
-                    </td>
-                    <td>
-                      <Group sx={{ gap: 1 }}>
-                        <TimeInput
-                          min={converters.dayjs.toHhmmString(
-                            finishTimeData.minimumAllowedFinishTime
-                          )}
-                          value={converters.date.toHhmmString(
-                            finishTimes.find(
-                              ({ runnerId, loopId }) =>
-                                loopId === finishTimeData.loop.id &&
-                                runnerId === finishTimeData.runner.id
-                            )?.finishTime
-                          )}
-                          onChange={(e) => {
-                            const newTime = converters.hhmmString.toDate(
-                              e.target.value
-                            );
-                            updateFinishTimes((finishTimes) => {
-                              const actualFinishTime = finishTimes.find(
+            <Box sx={{ overflowX: 'auto' }}>
+              <Table sx={{ '& td, & th': { whiteSpace: 'nowrap' } }}>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Loop</th>
+                    <th>Runner</th>
+                    <th>Estimated Finish Time</th>
+                    <th>Actual Finish Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {useMemo(
+                    () => computeFinishTimesTable(data, finishTimes),
+                    [data, finishTimes]
+                  ).map((finishTimeData, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>{finishTimeData.loop.name}</td>
+                      <td>{finishTimeData.runner.name}</td>
+                      <td>
+                        {converters.dayjs.toHuman(
+                          finishTimeData.estimatedLoopFinishLow
+                        )}
+                        -
+                        {converters.dayjs.toHuman(
+                          finishTimeData.estimatedLoopFinishHigh
+                        )}
+                      </td>
+                      <td>
+                        <Group sx={{ gap: 1 }}>
+                          <TimeInput
+                            min={converters.dayjs.toHhmmString(
+                              finishTimeData.minimumAllowedFinishTime
+                            )}
+                            value={converters.date.toHhmmString(
+                              finishTimes.find(
                                 ({ runnerId, loopId }) =>
                                   loopId === finishTimeData.loop.id &&
                                   runnerId === finishTimeData.runner.id
+                              )?.finishTime
+                            )}
+                            onChange={(e) => {
+                              const newTime = converters.hhmmString.toDate(
+                                e.target.value
                               );
-                              if (actualFinishTime) {
-                                actualFinishTime.finishTime = newTime;
-                              } else {
-                                finishTimes.push({
-                                  id: undefined, // im here NOT DONE HERE
-                                  runnerId: finishTimeData.runner.id,
-                                  loopId: finishTimeData.loop.id,
-                                  finishTime: newTime,
-                                });
-                              }
-                            });
-                          }}
-                          rightSection={
-                            <CloseButton
-                              variant="light"
-                              disabled={
-                                !Boolean(
-                                  finishTimes.find(
-                                    ({ runnerId, loopId }) =>
-                                      loopId === finishTimeData.loop.id &&
-                                      runnerId === finishTimeData.runner.id
+                              updateFinishTimes((finishTimes) => {
+                                const actualFinishTime = finishTimes.find(
+                                  ({ runnerId, loopId }) =>
+                                    loopId === finishTimeData.loop.id &&
+                                    runnerId === finishTimeData.runner.id
+                                );
+                                if (actualFinishTime) {
+                                  actualFinishTime.finishTime = newTime;
+                                } else {
+                                  finishTimes.push({
+                                    id: undefined, // im here NOT DONE HERE
+                                    runnerId: finishTimeData.runner.id,
+                                    loopId: finishTimeData.loop.id,
+                                    finishTime: newTime,
+                                  });
+                                }
+                              });
+                            }}
+                            rightSection={
+                              <CloseButton
+                                variant="light"
+                                disabled={
+                                  !Boolean(
+                                    finishTimes.find(
+                                      ({ runnerId, loopId }) =>
+                                        loopId === finishTimeData.loop.id &&
+                                        runnerId === finishTimeData.runner.id
+                                    )
                                   )
-                                )
-                              }
-                              onClick={() => {
-                                updateFinishTimes((finishTimes) => {
-                                  const index = finishTimes.findIndex(
-                                    ({ runnerId, loopId }) =>
-                                      runnerId === finishTimeData.runner.id &&
-                                      loopId == finishTimeData.loop.id
-                                  );
-                                  finishTimes.splice(index, 1);
-                                });
-                              }}
-                              size="sm"
-                            />
-                          }
-                        />
-                      </Group>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+                                }
+                                onClick={() => {
+                                  updateFinishTimes((finishTimes) => {
+                                    const index = finishTimes.findIndex(
+                                      ({ runnerId, loopId }) =>
+                                        runnerId === finishTimeData.runner.id &&
+                                        loopId == finishTimeData.loop.id
+                                    );
+                                    finishTimes.splice(index, 1);
+                                  });
+                                }}
+                                size="sm"
+                              />
+                            }
+                          />
+                        </Group>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Box>
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
