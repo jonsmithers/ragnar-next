@@ -4,6 +4,7 @@ import type { TeamData } from '@/server-utils/TeamDataZod';
 import {
   Accordion,
   ActionIcon,
+  Badge,
   Box,
   CloseButton,
   Group,
@@ -388,7 +389,20 @@ const PaceCalculator: FC<{
           <Accordion.Control>Estimated Start/Finish Times</Accordion.Control>
           <Accordion.Panel pb={4}>
             <Box sx={{ overflowX: 'auto' }}>
-              <Table sx={{ '& td, & th': { whiteSpace: 'nowrap' } }}>
+              <Table
+                sx={(theme) => ({
+                  '& td, & th': { whiteSpace: 'nowrap' },
+                  // '& .loop-color-red': {
+                  //   background: 'rgb(201,42,42, 0.3)', // theme.colors.red[9],
+                  // },
+                  // '& .loop-color-green': {
+                  //   background: 'rgb(43, 138, 62, 0.3)', // theme.colors.green[9],
+                  // },
+                  // '& .loop-color-yellow': {
+                  //   background: 'rgb(230,119,0, 0.3)', // theme.colors.yellow[9],
+                  // },
+                })}
+              >
                 <thead>
                   <tr>
                     <th>#</th>
@@ -403,15 +417,22 @@ const PaceCalculator: FC<{
                     () => computeFinishTimesTable(data, finishTimes),
                     [data, finishTimes]
                   ).map((finishTimeData, index) => (
-                    <tr key={index}>
+                    <tr
+                      key={index}
+                      className={`loop-color-${finishTimeData.loop.color}`}
+                    >
                       <td>{index + 1}</td>
-                      <td>{finishTimeData.loop.name}</td>
+                      <td>
+                        <Badge color={finishTimeData.loop.color} variant="dot">
+                          {finishTimeData.loop.name}
+                        </Badge>
+                      </td>
                       <td>{finishTimeData.runner.name}</td>
                       <td>
                         {converters.dayjs.toHuman(
                           finishTimeData.estimatedLoopFinishLow
                         )}
-                        -
+                        {` - `}
                         {converters.dayjs.toHuman(
                           finishTimeData.estimatedLoopFinishHigh
                         )}
