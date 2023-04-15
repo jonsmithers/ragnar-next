@@ -13,7 +13,6 @@ import {
   LoadingOverlay,
   Paper,
   Table,
-  Text,
   Transition,
 } from '@mantine/core';
 import { TimeInput } from '@mantine/dates';
@@ -207,8 +206,8 @@ const PaceCalculator: FC<{
         <Accordion.Item value="runners">
           <Accordion.Control>Runners</Accordion.Control>
           <Accordion.Panel pb={4}>
-            <Text>Team Start Time</Text>
             <TimeInput
+              label="Team Start Time"
               max="18:00"
               defaultValue={useMemo(
                 () => converters.dayjs.toHhmmString(data.startTime),
