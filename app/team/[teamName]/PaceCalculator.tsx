@@ -422,7 +422,7 @@ const PaceCalculator: FC<{
                     >
                       <td>{index + 1}</td>
                       <td>
-                        <Badge color={finishTimeData.loop.color} variant="dot">
+                        <Badge color={finishTimeData.loop.color} variant="filled">
                           {finishTimeData.loop.name}
                         </Badge>
                       </td>
